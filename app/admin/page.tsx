@@ -4,8 +4,8 @@ import { useEffect, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Users, UserPlus, Building2, TrendingUp, CheckCircle2, Clock, AlertTriangle } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
-import { AdminMetricsChart } from "@/components/dashboard/admin-metrics-chart"
-import { RecentEmployeesTable } from "@/components/dashboard/recent-employees-table"
+// import { AdminMetricsChart } from "@/components/dashboard/admin-metrics-chart"
+// import { RecentEmployeesTable } from "@/components/dashboard/recent-employees-table"
 
 interface DashboardStats {
   totalEmployees: number
@@ -186,8 +186,8 @@ export default function AdminDashboardPage() {
 
         {/* Charts and Recent Activity */}
         <div className="grid gap-6 md:grid-cols-2">
-          <AdminMetricsChart />
-          <RecentEmployeesTable employees={recentEmployees} />
+          {/* <AdminMetricsChart />
+          <RecentEmployeesTable employees={recentEmployees} /> */}
         </div>
 
         {/* Quick Actions */}
