@@ -25,42 +25,55 @@ export async function updateSession(request: NextRequest) {
     },
   )
 
-  // IMPORTANT: Do not run code between createServerClient and getUser()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  try {
+    // IMPORTANT: Do not run code between createServerClient and getUser()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
 
-  // Check for static admin session (from localStorage, passed via client-side redirect)
-  const isAdminRoute = request.nextUrl.pathname.startsWith("/admin")
-  const isStaticAdmin = request.headers.get('x-static-admin') === 'true'
+    // Check for static admin session (from localStorage, passed via client-side redirect)
+    const isAdminRoute = request.nextUrl.pathname.startsWith("/admin")
+    const isStaticAdmin = request.headers.get('x-static-admin') === 'true'
 
-  // Allow access to admin routes if it's a static admin session
-  if (isAdminRoute && isStaticAdmin) {
-    return supabaseResponse
-  }
+    // Allow access to admin routes if it's a static admin session
+    if (isAdminRoute && isStaticAdmin) {
+      return supabaseResponse
+    }
 
-  // Redirect to login if not authenticated and not already on auth pages
-  if (!user && !request.nextUrl.pathname.startsWith("/auth") && request.nextUrl.pathname !== "/" && !isAdminRoute) {
-    const url = request.nextUrl.clone()
-    url.pathname = "/auth/login"
-    return NextResponse.redirect(url)
-  }
-
-  // Redirect non-admin users away from admin routes
-  if (isAdminRoute && !isStaticAdmin && user) {
-    // Check if regular user has admin/hr role
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single()
-    
-    if (profile?.role !== "admin" && profile?.role !== "hr") {
+    // Redirect to login if not authenticated and not already on auth pages
+    if (!user && !request.nextUrl.pathname.startsWith("/auth") && request.nextUrl.pathname !== "/" && !isAdminRoute) {
       const url = request.nextUrl.clone()
-      url.pathname = "/dashboard"
+      url.pathname = "/auth/login"
       return NextResponse.redirect(url)
     }
-  }
 
-  return supabaseResponse
+    // Redirect non-admin users away from admin routes
+    if (isAdminRoute && !isStaticAdmin && user) {
+      // Check if regular user has admin/hr role
+      try {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", user.id)
+          .single()
+        
+        if (profile?.role !== "admin" && profile?.role !== "hr") {
+          const url = request.nextUrl.clone()
+          url.pathname = "/dashboard"
+          return NextResponse.redirect(url)
+        }
+      } catch (error) {
+        console.error("Error checking user role:", error)
+        // In case of error, redirect to dashboard to be safe
+        const url = request.nextUrl.clone()
+        url.pathname = "/dashboard"
+        return NextResponse.redirect(url)
+      }
+    }
+
+    return supabaseResponse
+  } catch (error) {
+    console.error("Middleware error:", error)
+    return supabaseResponse
+  }
 }
